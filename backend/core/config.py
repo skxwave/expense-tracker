@@ -1,4 +1,5 @@
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,10 +10,9 @@ class Config(BaseSettings):
 
     secret_key: str
     jwt_secret: str
-    jwt_lifetime_seconds: int = 3600
     jwt_algorithm: str = "HS256"
-    reset_password_token_secret: str
-    verification_token_secret: str
+    jwt_access_token_lifetime: int = 3600  # 1 hour
+    jwt_refresh_token_lifetime: int = 2592000  # 30 days
 
     model_config = SettingsConfigDict(
         env_file="../.env",
