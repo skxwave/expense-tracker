@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from authx import AuthX, AuthXConfig, RequestToken
 
-
+from db import db_session_manager
 from db.models.user import User
 from .config import settings
 
@@ -58,3 +58,30 @@ def generate_access_token(user: User) -> str:
         },
     )
     return access_token
+
+
+def get_current_user_id(token_payload=Depends(get_current_token)) -> int:
+    """
+    Get current user ID from token payload.
+    Query the user in your endpoint only if you need the full object.
+    """
+    return int(token_payload.sub)
+
+
+async def get_current_user(
+    token_payload=Depends(get_current_token),
+    session=Depends(db_session_manager.get_async_session),
+) -> User:
+    """Get the current authenticated user from token."""
+    from sqlalchemy import select
+    
+    user_id = token_payload.sub
+    
+    async with session as session:
+        user = await session.scalar(select(User).where(User.id == int(user_id)))
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return user

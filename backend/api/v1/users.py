@@ -1,6 +1,5 @@
 from authx import RequestToken
-from fastapi import APIRouter, status, HTTPException
-from fastapi.params import Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

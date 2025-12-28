@@ -1,6 +1,11 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
+if TYPE_CHECKING:
+    from .transaction import Transaction
 
 
 class User(Base):
@@ -19,3 +24,5 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
     is_superuser: Mapped[bool] = mapped_column(nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(nullable=False, default=False)
+
+    transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")
