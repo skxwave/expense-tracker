@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Config(BaseSettings):
     """Configuration settings for the application."""
+
     debug: bool = True
     db_url: str
 

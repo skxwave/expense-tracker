@@ -31,7 +31,7 @@ class AsyncSessionManager:
                 raise
             finally:
                 await session.close()
-    
+
     async def close(self):
         """Dispose of the database engine and close all connections."""
         await self.engine.dispose()

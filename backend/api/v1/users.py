@@ -1,3 +1,4 @@
+from authx import RequestToken
 from fastapi import APIRouter, status, HTTPException
 from fastapi.params import Depends
 from sqlalchemy import select
@@ -8,9 +9,15 @@ from core import (
     verify_password,
     security,
     get_current_token,
-    get_refresh_token_payload,
+    generate_access_token,
 )
-from core.schemas.user import UserCreate, UserLoginRequest, UserRead, UserLoginResponse
+from core.schemas.user import (
+    UserCreate,
+    UserLoginRequest,
+    UserRead,
+    UserLoginResponse,
+    UserRefreshResponse,
+)
 from db import db_session_manager
 from db.models import User
 
@@ -59,7 +66,7 @@ async def login(
             detail="Invalid username or password",
         )
 
-    access_token = security.create_access_token(uid=str(user.id))
+    access_token = generate_access_token(user)
     refresh_token = security.create_refresh_token(uid=str(user.id))
 
     return UserLoginResponse(
@@ -68,30 +75,38 @@ async def login(
     )
 
 
-@router.post("/auth/refresh", response_model=UserLoginResponse)
+@router.post("/auth/refresh", response_model=UserRefreshResponse)
 async def refresh_token(
-    token_payload=Depends(get_refresh_token_payload),
+    token: str,
     session: AsyncSession = Depends(db_session_manager.get_async_session),
-) -> UserLoginResponse:
+) -> UserRefreshResponse:
     """Refresh access token using refresh token."""
     # Extract user ID from token payload
-    user_id = token_payload.sub
+    converted_token = RequestToken(token=token, location="json", type="refresh")
+
+    # Verify refresh token
+    try:
+        payload = security.verify_token(converted_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token. Details: " + str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     # Verify user still exists
+    user_id = payload.sub
     user = await session.get(User, int(user_id))
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
         )
 
-    # Create new tokens
-    access_token = security.create_access_token(uid=str(user.id))
-    refresh_token = security.create_refresh_token(uid=str(user.id))
+    # Create new token
+    access_token = generate_access_token(user)
 
-    return UserLoginResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-    )
+    return UserRefreshResponse(access_token=access_token)
 
 
 @router.get("/me", response_model=UserRead)

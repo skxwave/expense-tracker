@@ -4,5 +4,5 @@ from .auth_config import (
     get_password_hash,
     verify_password,
     get_current_token,
-    get_refresh_token_payload,
+    generate_access_token,
 )
