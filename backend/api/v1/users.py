@@ -1,14 +1,13 @@
 from authx import RequestToken
 from fastapi import APIRouter, status, HTTPException, Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from core import (
-    get_password_hash,
     verify_password,
     security,
     get_current_token,
     generate_access_token,
+    get_password_hash,
 )
 from core.schemas.user import (
     UserCreate,
@@ -17,8 +16,7 @@ from core.schemas.user import (
     UserLoginResponse,
     UserRefreshResponse,
 )
-from db import db_session_manager
-from db.models import User
+from db.repositories import UserRepository, get_user_repository
 
 router = APIRouter(
     prefix="/users",
@@ -26,43 +24,48 @@ router = APIRouter(
 )
 
 
-@router.post("/auth/register", response_model=UserRead)
+@router.post(
+    "/auth/register", response_model=UserRead, status_code=status.HTTP_201_CREATED
+)
 async def register_user(
     user_create: UserCreate,
-    session: AsyncSession = Depends(db_session_manager.get_async_session),
+    user_repository: UserRepository = Depends(get_user_repository),
 ) -> UserRead:
     """Register a new user."""
     try:
-        new_user = User(
+        user = await user_repository.create(
             first_name=user_create.first_name,
             last_name=user_create.last_name,
             username=user_create.username,
             email=user_create.email,
             hashed_password=get_password_hash(user_create.password),
         )
-        session.add(new_user)
-        await session.commit()
-        await session.refresh(new_user)
-        return UserRead(**new_user.__dict__)
-    except Exception as e:
-        await session.rollback()
-        raise e
+        return UserRead.model_validate(user)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this username or email already exists",
+        )
 
 
 @router.post("/auth/login", response_model=UserLoginResponse)
 async def login(
     user_login: UserLoginRequest,
-    session: AsyncSession = Depends(db_session_manager.get_async_session),
+    user_repository: UserRepository = Depends(get_user_repository),
 ) -> UserLoginResponse:
     """Authenticate a user and return access and refresh tokens."""
-    user = await session.scalar(
-        select(User).where(User.username == user_login.username)
-    )
+    user = await user_repository.get_by_username(user_login.username)
 
     if not user or not verify_password(user_login.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is not active",
         )
 
     access_token = generate_access_token(user)
@@ -77,7 +80,7 @@ async def login(
 @router.post("/auth/refresh", response_model=UserRefreshResponse)
 async def refresh_token(
     token: str,
-    session: AsyncSession = Depends(db_session_manager.get_async_session),
+    user_repository: UserRepository = Depends(get_user_repository),
 ) -> UserRefreshResponse:
     """Refresh access token using refresh token."""
     # Extract user ID from token payload
@@ -89,17 +92,24 @@ async def refresh_token(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token. Details: " + str(e),
+            detail=f"Invalid or expired refresh token. Details: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Verify user still exists
-    user_id = payload.sub
-    user = await session.get(User, int(user_id))
+    user_id = int(payload.sub)
+    user = await user_repository.get_by_id(user_id)
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is deactivated",
         )
 
     # Create new token
@@ -111,17 +121,17 @@ async def refresh_token(
 @router.get("/me", response_model=UserRead)
 async def read_current_user(
     token_payload=Depends(get_current_token),
-    session: AsyncSession = Depends(db_session_manager.get_async_session),
+    user_repository: UserRepository = Depends(get_user_repository),
 ) -> UserRead:
     """Get the current authenticated user from the access token."""
     # Extract user ID from token payload
-    user_id = token_payload.sub
+    user_id = int(token_payload.sub)
 
     # Fetch user from database
-    user = await session.scalar(select(User).where(User.id == int(user_id)))
+    user = await user_repository.get_by_id(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    return UserRead(**user.__dict__)
+    return UserRead.model_validate(user)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserRead(BaseModel):
@@ -9,6 +9,8 @@ class UserRead(BaseModel):
     is_active: bool
     is_superuser: bool
     is_verified: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):

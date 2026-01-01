@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from core.auth_config import get_current_user
+from core.helpers import get_current_user
 from db.models.user import User
 
 
