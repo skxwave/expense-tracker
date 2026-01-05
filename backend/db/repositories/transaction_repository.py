@@ -20,7 +20,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         """Initialize transaction repository with session."""
         super().__init__(session, Transaction)
 
-    async def get_by_user_id(
+    async def get_transactions_by_user_id(
         self,
         user_id: int,
         skip: int = 0,
@@ -37,7 +37,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         result = await self._session.scalars(query)
         return result.all()
 
-    async def get_by_user_and_type(
+    async def get_transactions_by_user_and_type(
         self,
         user_id: int,
         transaction_type: TransactionType,
@@ -55,33 +55,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         result = await self._session.scalars(query)
         return result.all()
 
-    async def get_expenses(
-        self,
-        user_id: int,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> Sequence[Transaction]:
-        return await self.get_by_user_and_type(
-            user_id,
-            TransactionType.EXPENSE,
-            skip,
-            limit,
-        )
-
-    async def get_incomes(
-        self,
-        user_id: int,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> Sequence[Transaction]:
-        return await self.get_by_user_and_type(
-            user_id,
-            TransactionType.INCOME,
-            skip,
-            limit,
-        )
-
-    async def get_by_id_type_and_user(
+    async def get_transaction_by_id_type_and_user(
         self,
         transaction_id: int,
         user_id: int,
@@ -141,9 +115,17 @@ class TransactionRepository(BaseRepository[Transaction]):
         return total_income - total_expense
 
     async def update_transaction(
-        self, transaction_id: int, user_id: int, **kwargs
+        self,
+        transaction_id: int,
+        user_id: int,
+        transaction_type: TransactionType,
+        **kwargs,
     ) -> Transaction | None:
-        transaction = await self.get_by_id_and_user(transaction_id, user_id)
+        transaction = await self.get_transaction_by_id_type_and_user(
+            transaction_id,
+            user_id,
+            transaction_type=transaction_type,
+        )
         if not transaction:
             return None
 
@@ -152,9 +134,14 @@ class TransactionRepository(BaseRepository[Transaction]):
     async def delete_transaction(
         self,
         transaction_id: int,
+        transaction_type: TransactionType,
         user_id: int,
     ) -> bool:
-        transaction = await self.get_by_id_and_user(transaction_id, user_id)
+        transaction = await self.get_transaction_by_id_type_and_user(
+            transaction_id,
+            user_id,
+            transaction_type=transaction_type,
+        )
         if not transaction:
             return False
 

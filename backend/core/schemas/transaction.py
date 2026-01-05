@@ -1,5 +1,3 @@
-"""Pydantic schemas for Transaction model."""
-
 from datetime import datetime
 from decimal import Decimal
 
@@ -12,13 +10,21 @@ class TransactionBase(BaseModel):
     """Base schema for Transaction."""
 
     amount: Decimal = Field(
-        ..., gt=0, description="Transaction amount (must be positive)"
+        ...,
+        gt=0,
+        description="Transaction amount (must be positive)",
+        examples=[10.75],
     )
     description: str | None = Field(
-        None, max_length=255, description="Transaction description"
+        None,
+        max_length=255,
+        description="Transaction description",
+        examples=["Lunch at cafe"],
     )
     type: TransactionType = Field(
-        ..., description="Transaction type (expense or income)"
+        ...,
+        description="Transaction type (expense or income)",
+        examples=["expense", "income"],
     )
 
 
@@ -32,13 +38,16 @@ class TransactionUpdate(BaseModel):
     """Schema for updating a transaction."""
 
     amount: Decimal | None = Field(
-        None, gt=0, description="Transaction amount (must be positive)"
+        None,
+        gt=0,
+        description="Transaction amount (must be positive)",
+        examples=[10.75],
     )
     description: str | None = Field(
-        None, max_length=255, description="Transaction description"
-    )
-    type: TransactionType | None = Field(
-        None, description="Transaction type (expense or income)"
+        None,
+        max_length=255,
+        description="Transaction description",
+        examples=["Lunch at cafe"],
     )
 
 
