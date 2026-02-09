@@ -103,12 +103,6 @@ class TransactionRepository(BaseRepository[Transaction]):
         result = await self._session.scalar(query)
         return result or Decimal(0)
 
-    async def get_total_expenses(self, user_id: int) -> Decimal:
-        return await self.get_total_by_type(user_id, TransactionType.EXPENSE)
-
-    async def get_total_incomes(self, user_id: int) -> Decimal:
-        return await self.get_total_by_type(user_id, TransactionType.INCOME)
-
     async def get_balance(self, user_id: int) -> Decimal:
         total_income = await self.get_total_incomes(user_id)
         total_expense = await self.get_total_expenses(user_id)
