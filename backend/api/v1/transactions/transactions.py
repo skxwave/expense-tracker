@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
-from core.schemas.transaction import TransactionUpdate, TransactionRead
 from core.helpers import get_current_user
 from db.repositories import TransactionRepository, get_transaction_repository
 from db.models import User, TransactionType

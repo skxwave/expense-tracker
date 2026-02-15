@@ -10,6 +10,7 @@ from .mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from .user import User
+    from .account import Account
 
 
 class TransactionType(StrEnum):
@@ -36,6 +37,14 @@ class Transaction(TimestampMixin, Base):
     type: Mapped[TransactionType] = mapped_column(
         nullable=False,
         default=TransactionType.EXPENSE,
+    )
+
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
+    account: Mapped["Account"] = relationship(
+        back_populates="transactions",
     )
 
     user_id: Mapped[int] = mapped_column(
