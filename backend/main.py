@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="API for tracking expenses with JWT authentication",
-    version="1.0.0",
+    version="0.0.1",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -34,4 +34,10 @@ app.include_router(v1_router)
 
 
 if __name__ == "__main__":
-    uvicorn.run(app)
+    uvicorn.run(
+        "main:app",
+        log_config=None,
+        host="0.0.0.0",
+        reload=True,
+        port=8000,
+    )

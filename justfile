@@ -21,3 +21,9 @@ migrate TO = "head":
 # Run the development server
 dev:
     cd backend; uv run uvicorn main:app --reload --log-level info
+
+docker-run ENVIRONMENT="local":
+    docker-compose -f docker-compose.{{ENVIRONMENT}}.yaml up --build -d
+
+docker-down ENVIRONMENT="local":
+    docker-compose -f docker-compose.{{ENVIRONMENT}}.yaml down
