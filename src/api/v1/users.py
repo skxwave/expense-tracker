@@ -2,21 +2,21 @@ from authx import RequestToken
 from fastapi import APIRouter, status, HTTPException, Depends
 from sqlalchemy.exc import IntegrityError
 
-from core import (
+from src.core import (
     verify_password,
     security,
     get_current_token,
     generate_access_token,
     get_password_hash,
 )
-from core.schemas.user import (
+from src.core.schemas.user import (
     UserCreate,
     UserLoginRequest,
     UserRead,
     UserLoginResponse,
     UserRefreshResponse,
 )
-from db.repositories import UserRepository, get_user_repository
+from src.db.repositories import UserRepository, get_user_repository
 
 router = APIRouter(
     prefix="/users",

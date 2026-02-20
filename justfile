@@ -13,14 +13,14 @@ format-check FILE = ".":
 
 # Migrate the database
 arevision MESSAGE:
-    cd backend; uv run alembic revision --autogenerate -m "{{MESSAGE}}"
+    uv run alembic revision --autogenerate -m "{{MESSAGE}}"
 
 migrate TO = "head":
-    cd backend; uv run alembic upgrade {{TO}}
+    uv run alembic upgrade {{TO}}
 
 # Run the development server
 dev:
-    cd backend; uv run uvicorn main:app --reload --log-level info
+    uv run uvicorn main:app --reload --log-level info
 
 docker-run ENVIRONMENT="local":
     docker-compose -f docker-compose.{{ENVIRONMENT}}.yaml up --build -d

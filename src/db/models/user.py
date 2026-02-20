@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
 if TYPE_CHECKING:
+    from .account import Account
     from .transaction import Transaction
 
 
@@ -25,4 +26,5 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(nullable=False, default=False)
 
+    accounts: Mapped[list["Account"]] = relationship(back_populates="user")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")

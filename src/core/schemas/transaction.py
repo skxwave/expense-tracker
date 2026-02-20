@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from db.models.transaction import TransactionType
+from src.db.models.transaction import TransactionType
 
 
 class TransactionBase(BaseModel):

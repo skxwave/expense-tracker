@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import db_session_manager
+from src.db import db_session_manager
 from .base import BaseRepository
 from .user_repository import UserRepository
 from .transaction_repository import TransactionRepository

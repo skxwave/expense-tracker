@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
-from core.helpers import get_current_user
-from db.repositories import TransactionRepository, get_transaction_repository
-from db.models import User, TransactionType
+from src.core.helpers import get_current_user
+from src.db.repositories import TransactionRepository, get_transaction_repository
+from src.db.models import User, TransactionType
 
 router = APIRouter(
     prefix="/transactions",

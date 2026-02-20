@@ -5,7 +5,7 @@ from typing import Sequence
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models.transaction import Transaction, TransactionType
+from src.db.models.transaction import Transaction, TransactionType
 from .base import BaseRepository
 
 

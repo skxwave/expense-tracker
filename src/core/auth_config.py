@@ -5,8 +5,8 @@ from datetime import timedelta
 
 from authx import AuthX, AuthXConfig, RequestToken
 
-from db.models.user import User
-from .config import settings
+from src.db.models.user import User
+from src.core.config import settings
 
 auth_config = AuthXConfig()
 auth_config.JWT_ALGORITHM = settings.jwt_algorithm

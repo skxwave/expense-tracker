@@ -1,8 +1,8 @@
 from fastapi import Depends, HTTPException, status
 
-from db import db_session_manager
-from db.models.user import User
-from .auth_config import get_current_token
+from src.db import db_session_manager
+from src.db.models.user import User
+from src.core.auth_config import get_current_token
 
 
 async def get_current_user(

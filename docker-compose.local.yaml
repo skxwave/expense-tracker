@@ -5,8 +5,6 @@ services:
       context: ./backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
     depends_on:
       - db
       - migration_service
@@ -20,7 +18,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: expense-tracker
+      POSTGRES_DB: expense_tracker
     ports:
       - "5432:5432"
     volumes:
