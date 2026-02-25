@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.v1 import router as v1_router
+from src.core.exceptions_handler import add_exception_handlers
 from src.db import db_session_manager
 
 
@@ -30,6 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+add_exception_handlers(app)
 app.include_router(v1_router)
 
 

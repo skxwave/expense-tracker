@@ -40,10 +40,10 @@ def get_current_token(credentials: HTTPAuthorizationCredentials = Depends(http_b
         token = RequestToken(token=credentials.credentials, location="headers")
         payload = security.verify_token(token)
         return payload
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token. Details: " + str(e),
+            detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

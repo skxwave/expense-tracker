@@ -9,7 +9,8 @@ from src.db.models.transaction import Transaction, TransactionType
 from .base import BaseRepository
 
 
-class TransactionRepository(BaseRepository[Transaction]):
+class TransactionRepository():
+    # TODO
     """
     Repository for Transaction model operations.
 
