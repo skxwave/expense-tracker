@@ -1,5 +1,4 @@
 from decimal import Decimal
-from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Numeric, String
@@ -7,15 +6,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 from .mixins import TimestampMixin
+from src.models.enums import TransactionType
 
 if TYPE_CHECKING:
     from .user import User
     from .account import Account
-
-
-class TransactionType(StrEnum):
-    EXPENSE = "expense"
-    INCOME = "income"
 
 
 class Transaction(TimestampMixin, Base):

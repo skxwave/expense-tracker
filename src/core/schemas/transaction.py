@@ -34,21 +34,10 @@ class TransactionCreate(TransactionBase):
     pass
 
 
-class TransactionUpdate(BaseModel):
+class TransactionUpdate(TransactionBase):
     """Schema for updating a transaction."""
 
-    amount: Decimal | None = Field(
-        None,
-        gt=0,
-        description="Transaction amount (must be positive)",
-        examples=[10.75],
-    )
-    description: str | None = Field(
-        None,
-        max_length=255,
-        description="Transaction description",
-        examples=["Lunch at cafe"],
-    )
+    pass
 
 
 class TransactionRead(TransactionBase):

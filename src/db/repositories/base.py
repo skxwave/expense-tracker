@@ -64,7 +64,7 @@ class BaseRepository(ABC, Generic[T_Domain, T_DB]):
 
         if not db_obj:
             return None
-        
+
         if isinstance(update_data, BaseModel):
             update_dict = update_data.model_dump(exclude_unset=True, exclude={"id"})
         else:
@@ -81,12 +81,7 @@ class BaseRepository(ABC, Generic[T_Domain, T_DB]):
 
     async def delete(self, id: int) -> bool:
         """Delete a record by ID."""
-        db_obj = await self.session.get(self.db_model, id)
-
-        if not db_obj:
-            return False
-
-        await self.session.delete(db_obj)
-        await self.session.commit()
-
-        return True
+        if db_obj := await self.session.get(self.db_model, id):
+            await self.session.delete(db_obj)
+            await self.session.commit()
+        return None
