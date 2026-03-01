@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, Depends
+from dishka.integrations.fastapi import inject, FromDishka
 
 from src.core import get_current_token
 from src.core.schemas.user import (
@@ -8,7 +9,7 @@ from src.core.schemas.user import (
     UserLoginResponse,
     UserRefreshResponse,
 )
-from src.services import UserService, get_user_service, AuthService, get_auth_service
+from src.services import UserService, AuthService
 
 router = APIRouter(
     prefix="/users",
@@ -21,18 +22,23 @@ router = APIRouter(
     response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
 )
+@inject
 async def register_user(
     user_create: UserCreate,
-    service: UserService = Depends(get_user_service),
+    service: FromDishka[UserService],
 ) -> UserRead:
     """Register a new user."""
     return await service.register_user(user_create)
 
 
-@router.post("/auth/login", response_model=UserLoginResponse)
+@router.post(
+    "/auth/login",
+    response_model=UserLoginResponse,
+)
+@inject
 async def login(
     user_login: UserLoginRequest,
-    auth_service: AuthService = Depends(get_auth_service),
+    auth_service: FromDishka[AuthService],
 ) -> UserLoginResponse:
     """Authenticate a user and return access and refresh tokens."""
     return await auth_service.authenticate_and_create_token_pair(
@@ -41,19 +47,24 @@ async def login(
     )
 
 
-@router.post("/auth/refresh", response_model=UserRefreshResponse)
+@router.post(
+    "/auth/refresh",
+    response_model=UserRefreshResponse,
+)
+@inject
 async def refresh_token(
     token: str,
-    auth_service: AuthService = Depends(get_auth_service),
+    auth_service: FromDishka[AuthService],
 ) -> UserRefreshResponse:
     """Refresh access token using refresh token."""
     return await auth_service.refresh_access_token(token)
 
 
 @router.get("/me", response_model=UserRead)
+@inject
 async def read_current_user(
+    service: FromDishka[UserService],
     token_payload=Depends(get_current_token),
-    user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
     """Get the current authenticated user from the access token."""
-    return await user_service.get_by_id(int(token_payload.sub))
+    return await service.get_by_id(int(token_payload.sub))

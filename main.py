@@ -2,9 +2,11 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dishka.integrations.fastapi import setup_dishka
 
 from src.api.v1 import router as v1_router
 from src.core.exceptions_handler import add_exception_handlers
+from src.core.ioc import create_container
 from src.db import db_session_manager
 
 
@@ -33,6 +35,10 @@ app.add_middleware(
 )
 add_exception_handlers(app)
 app.include_router(v1_router)
+
+# Setup dishka DI container
+container = create_container()
+setup_dishka(container, app)
 
 
 if __name__ == "__main__":
