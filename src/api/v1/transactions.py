@@ -7,8 +7,9 @@ from src.core.schemas.transaction import (
     TransactionRead,
     TransactionUpdate,
 )
+from src.models.enums import TransactionType
 from src.services import TransactionService
-from src.db.models import User, TransactionType
+from src.db.models import User
 
 router = APIRouter(
     prefix="/transactions",
