@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from dishka.integrations.fastapi import inject, FromDishka
 
 from src.core.helpers import get_current_user
-from src.core.schemas.account import AccountCreate, AccountRead
+from src.core.schemas.account import AccountCreate, AccountRead, AccountUpdate
 from src.db.models.user import User
 from src.services import AccountService
 
@@ -43,6 +43,7 @@ async def read_account(
 @router.post(
     "/",
     response_model=AccountRead,
+    status_code=status.HTTP_201_CREATED,
 )
 @inject
 async def create_account(
@@ -52,5 +53,39 @@ async def create_account(
 ):
     return await service.create(
         data=account_data,
+        user_id=current_user.id,
+    )
+
+
+@router.put(
+    "/{account_id}",
+    response_model=AccountRead,
+)
+@inject
+async def update_account(
+    service: FromDishka[AccountService],
+    account_id: int,
+    account_data: AccountUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    return await service.update(
+        account_id=account_id,
+        data=account_data,
+        user_id=current_user.id,
+    )
+
+
+@router.delete(
+    "/{account_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@inject
+async def delete_account(
+    service: FromDishka[AccountService],
+    account_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    return await service.delete(
+        account_id=account_id,
         user_id=current_user.id,
     )

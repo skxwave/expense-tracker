@@ -22,13 +22,33 @@ class AccountRepository(BaseRepository[AccountDomain, AccountORM]):
         db_obj = self.db_model(**db_data)
         self.session.add(db_obj)
         await self.session.commit()
+        return await self._load_with_transactions(db_obj.id)
 
+    async def _load_with_transactions(self, account_id: int) -> AccountDomain | None:
         result = await self.session.scalar(
             select(self.db_model)
-            .where(self.db_model.id == db_obj.id)
+            .where(self.db_model.id == account_id)
             .options(selectinload(AccountORM.transactions))
         )
         return self._to_domain(result)
+
+    async def update(self, id: int, update_data: AccountDomain | dict) -> AccountDomain | None:
+        db_obj = await self.session.get(self.db_model, id)
+        if not db_obj:
+            return None
+
+        update_dict = (
+            update_data.model_dump(exclude_unset=True, exclude={"id"})
+            if isinstance(update_data, AccountDomain)
+            else update_data
+        )
+        for field, value in update_dict.items():
+            if hasattr(db_obj, field):
+                setattr(db_obj, field, value)
+
+        self.session.add(db_obj)
+        await self.session.commit()
+        return await self._load_with_transactions(id)
 
     async def get_account(
         self,

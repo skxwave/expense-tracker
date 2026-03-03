@@ -41,6 +41,14 @@ class AccountCreate(AccountBase):
     pass
 
 
+class AccountUpdate(BaseModel):
+    name: str | None = None
+    number: str | None = None
+    holder: str | None = None
+    description: str | None = None
+    type: AccountType | None = None
+
+
 class AccountRead(AccountBase):
     id: int
     transactions: list[TransactionRead | None] = []
