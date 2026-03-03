@@ -26,6 +26,11 @@ class TransactionBase(BaseModel):
         description="Transaction type (expense or income)",
         examples=["expense", "income"],
     )
+    account_id: int = Field(
+        ...,
+        description="Account ID",
+        examples=[1, 2, 3],
+    )
 
 
 class TransactionCreate(TransactionBase):

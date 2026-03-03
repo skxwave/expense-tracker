@@ -1,4 +1,5 @@
 from src.core.exceptions import EntityNotFoundError
+from src.services.account_service import AccountService
 
 from .base_service import BaseService
 from src.core.schemas.transaction import TransactionCreate, TransactionUpdate
@@ -11,8 +12,10 @@ class TransactionService(BaseService):
     def __init__(
         self,
         transaction_repository: TransactionRepository,
+        account_service: AccountService,
     ):
         self.repo = transaction_repository
+        self.account_service = account_service
 
     async def get(
         self,
@@ -51,9 +54,11 @@ class TransactionService(BaseService):
         transaction_data: TransactionCreate,
         user_id: int,
     ) -> TransactionDomain:
+        # Check account existence
+        await self.account_service.get_account(transaction_data.account_id, user_id)
+        
         new_transaction = TransactionDomain(
             **transaction_data.model_dump(),
-            account_id=1,  # TODO
             user_id=user_id,
         )
         return await self.repo.create(new_transaction)

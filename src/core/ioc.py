@@ -9,11 +9,8 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.core import settings
-from src.db.repositories import UserRepository
-from src.db.repositories.transaction_repository import TransactionRepository
-from src.services import UserService
-from src.services.auth_service import AuthService
-from src.services.transaction_service import TransactionService
+from src.db.repositories import UserRepository, TransactionRepository, AccountRepository
+from src.services import UserService, AuthService, TransactionService, AccountService
 
 
 class DatabaseProvider(Provider):
@@ -56,6 +53,10 @@ class RepositoryProvider(Provider):
     ) -> TransactionRepository:
         return TransactionRepository(session)
 
+    @provide(scope=Scope.REQUEST)
+    async def get_account_repository(self, session: AsyncSession) -> AccountRepository:
+        return AccountRepository(session)
+
 
 class ServiceProvider(Provider):
     """Provides service dependencies."""
@@ -66,14 +67,20 @@ class ServiceProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def get_transaction_service(
-        self, transaction_repository: TransactionRepository
+        self,
+        transaction_repository: TransactionRepository,
+        account_service: AccountService,
     ) -> TransactionService:
-        return TransactionService(transaction_repository)
+        return TransactionService(transaction_repository, account_service)
 
     @provide(scope=Scope.REQUEST)
-    async def get_auth_service(
-        self, user_service: UserService
-    ) -> AuthService:
+    async def get_account_service(
+        self, account_repository: AccountRepository
+    ) -> AccountService:
+        return AccountService(account_repository)
+
+    @provide(scope=Scope.REQUEST)
+    async def get_auth_service(self, user_service: UserService) -> AuthService:
         return AuthService(user_service)
 
 

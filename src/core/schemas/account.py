@@ -13,9 +13,9 @@ class AccountBase(BaseModel):
         description="Account name",
         examples=["Monobank"],
     )
-    number: int = Field(
+    number: str = Field(
         ...,
-        description="",
+        description="Account number",
         examples=["12345678"],
     )
     holder: str = Field(
@@ -41,9 +41,9 @@ class AccountCreate(AccountBase):
     pass
 
 
-class AccountRead(BaseModel):
+class AccountRead(AccountBase):
     id: int
-    transactions: list[TransactionRead] = []
+    transactions: list[TransactionRead | None] = []
     user_id: int
     created_at: datetime | None = None
     updated_at: datetime | None = None
