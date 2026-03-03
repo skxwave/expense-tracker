@@ -3,7 +3,7 @@ from authx import RequestToken
 from .user_service import UserService
 from .base_service import BaseService
 from src.core.auth_config import verify_password, generate_access_token, security
-from src.core.exceptions import InvalidCredentialsError, EntityNotFoundError
+from src.core.exceptions import InvalidCredentialsError
 
 
 class AuthService(BaseService):
@@ -26,23 +26,17 @@ class AuthService(BaseService):
             "token_type": "Bearer",
         }
 
-    async def refresh_access_token(
-        self,
-        token: str,
-    ):
+    async def refresh_access_token(self, token: str) -> dict[str, str]:
         converted_token = RequestToken(token=token, location="json", type="refresh")
 
         try:
             payload = security.verify_token(converted_token)
-        except:
+        except Exception:
             raise InvalidCredentialsError("Invalid or expired token.")
 
         user = await self.user_service.get_by_id(int(payload.sub))
-
-        if not user:
-            raise EntityNotFoundError("User not found")
-
         return {
             "access_token": generate_access_token(user),
             "token_type": "Bearer",
         }
+

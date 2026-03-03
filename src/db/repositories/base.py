@@ -80,8 +80,9 @@ class BaseRepository(ABC, Generic[T_Domain, T_DB]):
         return self._to_domain(db_obj)
 
     async def delete(self, id: int) -> bool:
-        """Delete a record by ID."""
+        """Delete a record by ID. Returns True if deleted, False if not found."""
         if db_obj := await self.session.get(self.db_model, id):
             await self.session.delete(db_obj)
             await self.session.commit()
-        return None
+            return True
+        return False

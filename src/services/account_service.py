@@ -1,4 +1,4 @@
-from src.core.exceptions import EntityNotFoundError, EntityAlreadyExistsError, DomainException
+from src.core.exceptions import EntityAlreadyExistsError, DomainException
 from src.core.schemas.account import AccountCreate
 
 from .base_service import BaseService
@@ -19,32 +19,29 @@ class AccountService(BaseService):
         account_id: int,
         user_id: int,
     ) -> AccountDomain:
-        obj = await self.repo.get_account(account_id, user_id)
-        if not obj:
-            raise EntityNotFoundError(f"Account with id {account_id} not found")
-        return obj
+        return self._require(
+            await self.repo.get_account(account_id, user_id),
+            f"Account with id {account_id} not found",
+        )
 
     async def get_accounts(
         self,
         user_id: int,
-    ) -> AccountDomain:
+    ) -> list[AccountDomain]:
         return await self.repo.get_accounts(user_id)
-    
+
     async def create(
         self,
         data: AccountCreate,
         user_id: int,
     ) -> AccountDomain:
-        new_account = AccountDomain(
-            **data.model_dump(),
-            user_id=user_id,
-        )
+        new_account = AccountDomain(**data.model_dump(), user_id=user_id)
         try:
             return await self.repo.create(new_account)
         except IntegrityError as e:
-            constraint_name = getattr(e.orig, 'constraint_name', None) or str(e.orig)
-        
+            constraint_name = getattr(e.orig, "constraint_name", None) or str(e.orig)
             if "uq_user_account_number" in constraint_name:
-                raise EntityAlreadyExistsError("An account with this number already exists.")
-            
+                raise EntityAlreadyExistsError(
+                    "An account with this number already exists."
+                )
             raise DomainException("Something went wrong...")

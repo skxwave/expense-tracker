@@ -69,9 +69,9 @@ class ServiceProvider(Provider):
     async def get_transaction_service(
         self,
         transaction_repository: TransactionRepository,
-        account_service: AccountService,
+        account_repository: AccountRepository,
     ) -> TransactionService:
-        return TransactionService(transaction_repository, account_service)
+        return TransactionService(transaction_repository, account_repository)
 
     @provide(scope=Scope.REQUEST)
     async def get_account_service(

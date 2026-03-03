@@ -17,9 +17,10 @@ class TransactionRepository(BaseRepository[TransactionDomain, TransactionORM]):
         """Initialize transaction repository with session."""
         super().__init__(session, TransactionDomain, TransactionORM)
 
-    async def get_transactions_by_user_id(
+    async def get_transactions(
         self,
         user_id: int,
+        transaction_type: TransactionType | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> list[TransactionDomain]:
@@ -30,62 +31,23 @@ class TransactionRepository(BaseRepository[TransactionDomain, TransactionORM]):
             .offset(skip)
             .limit(limit)
         )
+        if transaction_type is not None:
+            query = query.where(self.db_model.type == transaction_type)
 
         obj_list = await self.session.scalars(query)
         return [self._to_domain(t) for t in obj_list.all()]
 
-    async def get_transactions_by_user_and_type(
-        self,
-        user_id: int,
-        transaction_type: TransactionType,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> list[TransactionDomain]:
-        query = (
-            select(self.db_model)
-            .where(
-                self.db_model.user_id == user_id, self.db_model.type == transaction_type
-            )
-            .order_by(self.db_model.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-
-        obj_list = await self.session.scalars(query)
-        return [self._to_domain(t) for t in obj_list.all()]
-
-    async def get_transaction_by_id_type_and_user(
+    async def get_transaction_by_user(
         self,
         transaction_id: int,
         user_id: int,
-        transaction_type: TransactionType,
-    ) -> TransactionDomain | None:
-        query = select(self.db_model).where(
-            self.db_model.id == transaction_id,
-            self.db_model.user_id == user_id,
-            self.db_model.type == transaction_type,
-        )
-
-        obj = await self.session.scalar(query)
-
-        if not obj:
-            return None
-        
-        return self._to_domain(obj)
-    
-    async def get_transaction_by_id_and_user(
-        self,
-        transaction_id: int,
-        user_id: int,
+        transaction_type: TransactionType | None = None,
     ) -> TransactionDomain | None:
         query = select(self.db_model).where(
             self.db_model.id == transaction_id,
             self.db_model.user_id == user_id,
         )
+        if transaction_type is not None:
+            query = query.where(self.db_model.type == transaction_type)
 
-        obj = await self.session.scalar(query)
-
-        if not obj:
-            return None
-        
-        return self._to_domain(obj)
+        return self._to_domain(await self.session.scalar(query))

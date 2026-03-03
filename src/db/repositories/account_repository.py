@@ -18,45 +18,39 @@ class AccountRepository(BaseRepository[AccountDomain, AccountORM]):
     async def create(self, domain_obj: AccountDomain) -> AccountDomain:
         db_data = domain_obj.model_dump(exclude={"id"})
         db_obj = self.db_model(**db_data)
-
         self.session.add(db_obj)
         await self.session.commit()
-        await self.session.refresh(db_obj, with_for_update=False)
 
-        db_obj = await self.session.scalar(
+        result = await self.session.scalar(
             select(self.db_model)
             .where(self.db_model.id == db_obj.id)
             .options(selectinload(AccountORM.transactions))
         )
-
-        return self._to_domain(db_obj)
+        return self._to_domain(result)
 
     async def get_account(
         self,
         account_id: int,
         user_id: int,
-    ) -> AccountDomain:
-        account = await self.session.scalar(
-            select(self.db_model).where(
-                self.db_model.id == account_id,
-                self.db_model.user_id == user_id,
-            )
-        )
-
-        if not account:
-            return None
-
-        transactions = await self.session.scalars(
-            select(TransactionORM)
+    ) -> AccountDomain | None:
+        subq = (
+            select(TransactionORM.id)
             .where(TransactionORM.account_id == account_id)
             .order_by(TransactionORM.created_at.desc())
             .limit(5)
+            .subquery()
         )
-
-        return self.domain_model(
-            **account.__dict__,
-            transactions=transactions.all(),
+        result = await self.session.scalar(
+            select(self.db_model)
+            .where(
+                self.db_model.id == account_id,
+                self.db_model.user_id == user_id,
+            )
+            .options(
+                selectinload(AccountORM.transactions.and_(TransactionORM.id.in_(subq)))
+            )
         )
+        return self._to_domain(result)
 
     async def get_accounts(
         self,
