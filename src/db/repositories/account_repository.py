@@ -1,4 +1,6 @@
-from sqlalchemy import select, func
+from decimal import Decimal
+
+from sqlalchemy import select, func, update as sa_update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -81,3 +83,21 @@ class AccountRepository(BaseRepository[AccountDomain, AccountORM]):
 
         result = await self.session.scalars(stmt)
         return [self._to_domain(a) for a in result.unique().all()]
+
+    async def get_balance(self, account_id: int, user_id: int) -> Decimal | None:
+        """Return the current balance of an account, or None if not found / not owned."""
+        return await self.session.scalar(
+            select(self.db_model.value).where(
+                self.db_model.id == account_id,
+                self.db_model.user_id == user_id,
+            )
+        )
+
+    async def adjust_balance(self, account_id: int, delta: Decimal) -> None:
+        """Atomically add delta (positive or negative) to the account balance."""
+        await self.session.execute(
+            sa_update(self.db_model)
+            .where(self.db_model.id == account_id)
+            .values(value=self.db_model.value + delta)
+        )
+        await self.session.commit()

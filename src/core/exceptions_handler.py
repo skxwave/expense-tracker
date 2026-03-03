@@ -5,6 +5,7 @@ from src.core.exceptions import (
     EntityNotFoundError,
     EntityAlreadyExistsError,
     InvalidCredentialsError,
+    InsufficientFundsError,
 )
 
 
@@ -37,5 +38,15 @@ def add_exception_handlers(app: FastAPI) -> None:
     ):
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": exc.message},
+        )
+
+    @app.exception_handler(InsufficientFundsError)
+    async def insufficient_funds_handler(
+        request: Request,
+        exc: InsufficientFundsError,
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={"detail": exc.message},
         )

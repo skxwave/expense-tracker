@@ -1,4 +1,6 @@
-from src.core.exceptions import EntityNotFoundError
+from decimal import Decimal
+
+from src.core.exceptions import EntityNotFoundError, InsufficientFundsError
 
 from .base_service import BaseService
 from src.core.schemas.transaction import TransactionCreate, TransactionUpdate
@@ -47,18 +49,21 @@ class TransactionService(BaseService):
         transaction_data: TransactionCreate,
         user_id: int,
     ) -> TransactionDomain:
-        if not await self.account_repo.get_account(
-            transaction_data.account_id, user_id
-        ):
-            raise EntityNotFoundError(
-                f"Account with id {transaction_data.account_id} not found"
+        balance = await self.account_repo.get_balance(transaction_data.account_id, user_id)
+        if balance is None:
+            raise EntityNotFoundError(f"Account with id {transaction_data.account_id} not found")
+
+        if transaction_data.type == TransactionType.EXPENSE and balance < transaction_data.amount:
+            raise InsufficientFundsError(
+                f"Insufficient funds: balance {balance}, required {transaction_data.amount}"
             )
 
-        new_transaction = TransactionDomain(
-            **transaction_data.model_dump(),
-            user_id=user_id,
+        result = await self.repo.create(
+            TransactionDomain(**transaction_data.model_dump(), user_id=user_id)
         )
-        return await self.repo.create(new_transaction)
+        delta = -transaction_data.amount if transaction_data.type == TransactionType.EXPENSE else transaction_data.amount
+        await self.account_repo.adjust_balance(transaction_data.account_id, delta)
+        return result
 
     async def update_transaction(
         self,
@@ -66,8 +71,39 @@ class TransactionService(BaseService):
         transaction_data: TransactionUpdate,
         user_id: int,
     ) -> TransactionDomain:
-        if not await self.repo.get_transaction_by_user(transaction_id, user_id):
+        old = await self.repo.get_transaction_by_user(transaction_id, user_id)
+        if not old:
             raise EntityNotFoundError(f"Transaction with id {transaction_id} not found")
+
+        # Delta that reverses the old transaction's effect on its account
+        old_reverse: Decimal = old.amount if old.type == TransactionType.EXPENSE else -old.amount
+
+        if old.account_id != transaction_data.account_id:
+            # Account changed: verify new account ownership and check funds
+            new_balance = await self.account_repo.get_balance(transaction_data.account_id, user_id)
+            if new_balance is None:
+                raise EntityNotFoundError(f"Account with id {transaction_data.account_id} not found")
+
+            if transaction_data.type == TransactionType.EXPENSE and new_balance < transaction_data.amount:
+                raise InsufficientFundsError(
+                    f"Insufficient funds: balance {new_balance}, required {transaction_data.amount}"
+                )
+
+            await self.account_repo.adjust_balance(old.account_id, old_reverse)
+            new_delta = -transaction_data.amount if transaction_data.type == TransactionType.EXPENSE else transaction_data.amount
+            await self.account_repo.adjust_balance(transaction_data.account_id, new_delta)
+        else:
+            # Same account: check balance after reverting old effect
+            current_balance = await self.account_repo.get_balance(old.account_id, user_id)
+            reverted_balance = current_balance + old_reverse
+
+            if transaction_data.type == TransactionType.EXPENSE and reverted_balance < transaction_data.amount:
+                raise InsufficientFundsError(
+                    f"Insufficient funds: balance {reverted_balance}, required {transaction_data.amount}"
+                )
+
+            new_delta = -transaction_data.amount if transaction_data.type == TransactionType.EXPENSE else transaction_data.amount
+            await self.account_repo.adjust_balance(old.account_id, old_reverse + new_delta)
 
         update_dict = transaction_data.model_dump(exclude_unset=True)
         update_dict["user_id"] = user_id
@@ -78,6 +114,10 @@ class TransactionService(BaseService):
         transaction_id: int,
         user_id: int,
     ) -> None:
-        if not await self.repo.get_transaction_by_user(transaction_id, user_id):
+        old = await self.repo.get_transaction_by_user(transaction_id, user_id)
+        if not old:
             raise EntityNotFoundError(f"Transaction with id {transaction_id} not found")
+
+        reverse: Decimal = old.amount if old.type == TransactionType.EXPENSE else -old.amount
         await self.repo.delete(transaction_id)
+        await self.account_repo.adjust_balance(old.account_id, reverse)

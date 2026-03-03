@@ -21,3 +21,9 @@ class InvalidCredentialsError(DomainException):
     """Raised during failed login attempts."""
 
     pass
+
+
+class InsufficientFundsError(DomainException):
+    """Raised when an account has insufficient funds for an expense."""
+
+    pass
