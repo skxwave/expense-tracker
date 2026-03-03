@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="API for tracking expenses with JWT authentication",
-    version="0.0.4",
+    version="0.0.5",
     lifespan=lifespan,
 )
 app.add_middleware(
