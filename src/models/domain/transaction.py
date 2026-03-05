@@ -18,3 +18,12 @@ class Transaction(BaseModel):
     updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionSummary(BaseModel):
+    # total_balance: Decimal | None
+    total_incomes: Decimal
+    total_expenses: Decimal
+    # goals_progress: Decimal
+
+    model_config = ConfigDict(from_attributes=True)

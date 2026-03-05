@@ -4,7 +4,10 @@ from src.core.exceptions import EntityNotFoundError, InsufficientFundsError
 
 from .base_service import BaseService
 from src.core.schemas.transaction import TransactionCreate, TransactionUpdate
-from src.models.domain.transaction import Transaction as TransactionDomain
+from src.models.domain.transaction import (
+    Transaction as TransactionDomain,
+    TransactionSummary as TransactionSummaryDomain,
+)
 from src.db.repositories import TransactionRepository, AccountRepository
 from src.models.enums import TransactionType
 
@@ -121,3 +124,9 @@ class TransactionService(BaseService):
         reverse: Decimal = old.amount if old.type == TransactionType.EXPENSE else -old.amount
         await self.repo.delete(transaction_id)
         await self.account_repo.adjust_balance(old.account_id, reverse)
+
+    async def get_summary(
+        self,
+        user_id: int,
+    ) -> TransactionSummaryDomain:
+        return await self.repo.get_summary(user_id)

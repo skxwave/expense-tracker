@@ -6,6 +6,7 @@ from src.core.schemas.transaction import (
     TransactionCreate,
     TransactionRead,
     TransactionUpdate,
+    TransactionSummary,
 )
 from src.models.enums import TransactionType
 from src.services import TransactionService
@@ -15,6 +16,18 @@ router = APIRouter(
     prefix="/transactions",
     tags=["transactions"],
 )
+
+
+@router.get(
+    "/dashboard",
+    response_model=TransactionSummary,
+)
+@inject
+async def dashboard(
+    service: FromDishka[TransactionService],
+    current_user: User = Depends(get_current_user),
+):
+    return await service.get_summary(current_user.id)
 
 
 @router.get(
