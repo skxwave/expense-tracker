@@ -24,6 +24,9 @@ class UserService(BaseService):
         if await self.repo.get_by_email(user_data.email):
             raise EntityAlreadyExistsError(f"User with email {user_data.email} already exists")
 
+        if await self.repo.get_by_username(user_data.username):
+            raise EntityAlreadyExistsError(f"User with username {user_data.username} already exists")
+
         new_user = UserDomain(
             first_name=user_data.first_name,
             last_name=user_data.last_name,
@@ -32,4 +35,3 @@ class UserService(BaseService):
             hashed_password=get_password_hash(user_data.password),
         )
         return await self.repo.create(new_user)
-
