@@ -11,7 +11,8 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      - .:/app          # mount source code for hot reload
+      - /app/.venv      # anonymous volume keeps the container-built venv intact
     command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     # restart: on-failure
 
