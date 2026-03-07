@@ -32,7 +32,9 @@ class AccountRepository(BaseRepository[AccountDomain, AccountORM]):
         )
         return self._to_domain(result)
 
-    async def update(self, id: int, update_data: AccountDomain | dict) -> AccountDomain | None:
+    async def update(
+        self, id: int, update_data: AccountDomain | dict
+    ) -> AccountDomain | None:
         db_obj = await self.session.get(self.db_model, id)
         if not db_obj:
             return None
@@ -121,3 +123,12 @@ class AccountRepository(BaseRepository[AccountDomain, AccountORM]):
             .values(value=self.db_model.value + delta)
         )
         await self.session.commit()
+
+    async def get_overall_balance(self, user_id: int) -> Decimal:
+        """Return overall balance between all existing accounts"""
+        result = await self.session.scalar(
+            select(func.sum(self.db_model.value)).where(
+                self.db_model.user_id == user_id,
+            )
+        )
+        return result or Decimal(0)

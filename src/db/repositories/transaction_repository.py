@@ -1,10 +1,12 @@
+from decimal import Decimal
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.transaction import Transaction as TransactionORM, TransactionType
 from src.models.domain.transaction import (
     Transaction as TransactionDomain,
-    TransactionSummary as TransactionSummaryDomain,
 )
 from .base import BaseRepository
 
@@ -55,10 +57,12 @@ class TransactionRepository(BaseRepository[TransactionDomain, TransactionORM]):
 
         return self._to_domain(await self.session.scalar(query))
     
-    async def get_summary(
+    async def get_incomes_and_expenses(
         self,
         user_id: int,
-    ) -> TransactionSummaryDomain:
+        days: int = 30,
+    ) -> tuple[Decimal, Decimal]:
+        since = datetime.now(timezone.utc) - timedelta(days=days)
         result = await self.session.execute(
             select(
                 func.coalesce(func.sum(
@@ -67,12 +71,12 @@ class TransactionRepository(BaseRepository[TransactionDomain, TransactionORM]):
                 func.coalesce(func.sum(
                     case((self.db_model.type == TransactionType.EXPENSE, self.db_model.amount), else_=0)
                 ), 0).label("total_expenses"),
-            ).where(self.db_model.user_id == user_id)
+            ).where(
+                self.db_model.user_id == user_id,
+                self.db_model.created_at >= since,
+            )
         )
         summary = result.one()
-        return TransactionSummaryDomain(
-            total_incomes=summary.total_incomes,
-            total_expenses=summary.total_expenses,
-        )
+        return summary.total_incomes, summary.total_expenses
 
         

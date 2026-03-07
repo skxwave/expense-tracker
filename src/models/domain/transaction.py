@@ -21,9 +21,9 @@ class Transaction(BaseModel):
 
 
 class TransactionSummary(BaseModel):
-    # total_balance: Decimal | None
-    total_incomes: Decimal
-    total_expenses: Decimal
-    # goals_progress: Decimal
+    total_balance: Decimal = 0
+    total_incomes: Decimal = 0
+    total_expenses: Decimal = 0
+    # goals_progress: Decimal  # TODO
 
     model_config = ConfigDict(from_attributes=True)

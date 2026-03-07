@@ -129,4 +129,10 @@ class TransactionService(BaseService):
         self,
         user_id: int,
     ) -> TransactionSummaryDomain:
-        return await self.repo.get_summary(user_id)
+        incomes, expenses = await self.repo.get_incomes_and_expenses(user_id)
+        balance = await self.account_repo.get_overall_balance(user_id)
+        return TransactionSummaryDomain(
+            total_balance=balance,
+            total_incomes=incomes,
+            total_expenses=expenses,
+        )

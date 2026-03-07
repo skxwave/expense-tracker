@@ -59,7 +59,7 @@ class TransactionRead(TransactionBase):
 class TransactionSummary(BaseModel):
     """Schema for transaction summary statistics."""
 
-    # total_balance: Decimal | None
-    total_incomes: Decimal
-    total_expenses: Decimal
+    total_balance: Decimal = 0
+    total_incomes: Decimal = 0
+    total_expenses: Decimal = 0
     # goals_progress: Decimal
