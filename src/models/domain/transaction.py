@@ -27,3 +27,10 @@ class TransactionSummary(BaseModel):
     # goals_progress: Decimal  # TODO
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TotalIncomesExpenses(BaseModel):
+    incomes: Decimal = 0
+    expenses: Decimal = 0
+
+    model_config = ConfigDict(from_attributes=True)

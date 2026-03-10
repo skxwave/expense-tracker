@@ -7,6 +7,7 @@ from src.core.schemas.transaction import TransactionCreate, TransactionUpdate
 from src.models.domain.transaction import (
     Transaction as TransactionDomain,
     TransactionSummary as TransactionSummaryDomain,
+    TotalIncomesExpenses as TotalIncomesExpensesDomain,
 )
 from src.db.repositories import TransactionRepository, AccountRepository
 from src.models.enums import TransactionType
@@ -125,10 +126,23 @@ class TransactionService(BaseService):
         await self.repo.delete(transaction_id)
         await self.account_repo.adjust_balance(old.account_id, reverse)
 
+    async def get_incomes_and_expenses(
+        self,
+        user_id: int,
+        days: int = 30,
+    ) -> TotalIncomesExpensesDomain:
+        incomes, expenses = await self.repo.get_incomes_and_expenses(user_id, days)
+        return TotalIncomesExpensesDomain(
+            expenses=expenses,
+            incomes=incomes,
+        )
+
     async def get_summary(
         self,
         user_id: int,
     ) -> TransactionSummaryDomain:
+        # TODO: Remake
+
         incomes, expenses = await self.repo.get_incomes_and_expenses(user_id)
         balance = await self.account_repo.get_overall_balance(user_id)
         return TransactionSummaryDomain(

@@ -7,6 +7,7 @@ from src.core.schemas.transaction import (
     TransactionRead,
     TransactionUpdate,
     TransactionSummary,
+    TotalIncomeExpenses,
 )
 from src.models.enums import TransactionType
 from src.services import TransactionService
@@ -28,6 +29,19 @@ async def dashboard(
     current_user: User = Depends(get_current_user),
 ):
     return await service.get_summary(current_user.id)
+
+
+@router.get(
+    "/total_incomes_expenses",
+    response_model=TotalIncomeExpenses,
+)
+@inject
+async def incomes_expenses(
+    service: FromDishka[TransactionService],
+    current_user: User = Depends(get_current_user),
+    days: int = 30,
+):
+    return await service.get_incomes_and_expenses(current_user.id, days)
 
 
 @router.get(

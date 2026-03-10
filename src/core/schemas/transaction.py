@@ -63,3 +63,8 @@ class TransactionSummary(BaseModel):
     total_incomes: Decimal = 0
     total_expenses: Decimal = 0
     # goals_progress: Decimal
+
+
+class TotalIncomeExpenses(BaseModel):
+    expenses: Decimal = 0
+    incomes: Decimal = 0
