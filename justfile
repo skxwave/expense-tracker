@@ -24,3 +24,7 @@ docker-run ENVIRONMENT="local":
 
 docker-down ENVIRONMENT="local":
     docker-compose -f docker-compose.{{ENVIRONMENT}}.yaml down
+
+# Seed the database with a test user, accounts and transactions
+seed:
+    uv run python scripts/seed.py
